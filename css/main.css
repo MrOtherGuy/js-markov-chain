@@ -1,0 +1,27 @@
+body{ background: rgb(210,220,240) }
+.success{ color: darkgreen }
+.error{ color: darkred }
+@media (prefers-color-scheme: dark){
+  body{ background: rgb(30,40,50); color: rgb(247,249,210) }
+  textarea{ background: rgb(40,50,70); color: rgb(247,249,210) }
+  .success{ color: lightgreen }
+  .error{ color: pink }
+}
+
+#textbox::before{ content: ">> " }
+#textbox{
+  border: 2px inset rgb(120,120,120);
+  padding: 0.3em 1em;
+  white-space: normal;
+  background: rgba(120,120,120,0.2)
+}
+button{ margin-top: 1em }
+
+@keyframes burst{ from { background-size:0% } to {background-size: 100%} }
+.status{ opacity:0.5 }
+.status.success,
+.status.error{
+  animation: burst 300ms 1 linear;
+  background-image: linear-gradient(90deg,transparent,currentcolor);
+  background-repeat: no-repeat;
+}
