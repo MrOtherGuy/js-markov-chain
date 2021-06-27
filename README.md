@@ -75,14 +75,14 @@ In short, `.current()` return the current state of the system - `.next()` transi
 
 ### Note on states
 
-You can call `.next()` method on a particular state and it will give you one of the possible nodes it can transition into. But this DOES NOT modify the internal state of the chain.
+You can call `.next()` method on a particular state and it will give you the value of the possible nodes it can transition into. But it does DOES NOT modify the internal state of the chain nor give you the node object itself.
 
 ```
 let my_state = MC.current();
 console.log(my_state.value)
 << 5
 
-console.log(my_state.next().value)
+console.log(my_state.next())
 << 4
 
 ```
