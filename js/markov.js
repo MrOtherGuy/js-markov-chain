@@ -25,7 +25,8 @@ function State(val){
       return 0
     }else{
       if(!targets.length){
-        return this.value
+        // this means that the state is a dead-end. There is nothing to transition into
+        return null
       }
       let rand = Math.random();
       let idx = 0;
@@ -58,6 +59,8 @@ function StateManager(){
   const states = new Map();
   let currentState = null;
   
+  this.needsInitilization = true;
+  
   this.add = (value) => {
     let state = states.get(value);
     if(state){
@@ -67,16 +70,7 @@ function StateManager(){
     states.set(value,n);
     return n
   }
-  
-  this.updateNode = (val,newNext) => {
-    let state = states.get(val);
-    if(!state){
-      console.log("no state of that name")
-    }else{
-      state.set(newNext)
-    }
-  }
-  
+   
   this.compile = () => {
     for(let state of states.values()){
       state.compile()
@@ -89,9 +83,13 @@ function StateManager(){
   this.next = () => {
     if(!currentState){
       console.warn("states is not initialized!");
-      return
+      return null
     }
     let nextId = currentState.next();
+    let node = states.get(nextId);
+    if(!node){
+      return { value: null }
+    }
     currentState = states.get(nextId);
     return currentState
   }
@@ -107,6 +105,7 @@ function StateManager(){
       }
       currentState = states.get(keys.next().value)
     }
+    this.needsInitilization = false;
   }
   
   this.current = () => currentState;
@@ -123,7 +122,10 @@ function MarkovChain(){
   const SM = new StateManager();
   
   this.state = () => SM.current();
-  this.update = () => SM.next();
+  this.update = () => {
+    SM.next();
+  }
+  this.needsInit = () => SM.needsInitilization;
   this.init = (val) => SM.initialize(val);
   
   this.build = (arr) => {
@@ -146,28 +148,51 @@ function MarkovChain(){
   this.buildFromText = (str) => this.build(str.split(" ").filter(a => !!a.trim() ));
   
   this.compose = (n) => {
+    if(SM.needsInitilization){
+      console.warn("state needs initialization");
+      return "";
+    }
     let i = 0;
-    let v = [];
-    while(i++<n){
-      v.push(SM.next().value)
+    let v = [SM.current().value];
+    while(++i < n){
+      let n = SM.next().value;
+      if(n === null){
+        SM.needsInitilization = true;
+        break
+      }
+      v.push(n)
     }
     return v.join(" ");
   }
   
   this.makeSentence = (max = 50) => {
+    if(SM.needsInitilization){
+      console.warn("state needs initialization");
+      return "";
+    }
     let i = 0;
     const re = /[\.\?\!]$/;
-    let first = SM.next().value;
+    let first = SM.current().value;
+    if(first === null){
+      SM.needsInitilization = true;
+      return ""
+    }
     while(re.test(first)){
-      first = SM.next();
+      first = SM.next().value;
       i++;
+      if(i > max || first === null){
+        SM.needsInitilization = true;
+        return ""
+      }
     }
     let s = first.replace(/^./,first[0].toUpperCase()) + " ";
   
     while(i++ < max){
       let val = SM.next().value;
-      if(!val){
-        continue
+      if(val === null){
+        // this is the end of the road, system cannot transition to any node
+        SM.needsInitilization = true;
+        break
       }
       s += val;
       if(re.test(val)){

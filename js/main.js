@@ -6,13 +6,20 @@ function init(){
   MC.build(a);
   MC.init(); // sets initial state
   
-  let getTextBox = () => document.getElementById("textbox");
+  const reInitMC = () => {
+    if(MC.needsInit()){
+      MC.init()
+    }
+  };
+  const getTextBox = () => document.getElementById("textbox");
   
   document.getElementById("textButton").addEventListener("click",(e)=>{
-    getTextBox().textContent = MC.compose(200)
+    getTextBox().textContent = MC.compose(200);
+    reInitMC()
   });
   document.getElementById("sentenceButton").addEventListener("click",(e)=>{
-    getTextBox().textContent = MC.makeSentence()
+    getTextBox().textContent = MC.makeSentence();
+    reInitMC()
   });
   document.getElementById("textinputButton").addEventListener("click",(e)=>{
     let input = document.getElementById("textinput");
