@@ -154,6 +154,10 @@ function MarkovChain(){
     }
     let i = 0;
     let v = [SM.current().value];
+    if(v[0] === null){
+      SM.needsInitilization = true;
+      return "";
+    }
     while(++i < n){
       let n = SM.next().value;
       if(n === null){
@@ -162,6 +166,7 @@ function MarkovChain(){
       }
       v.push(n)
     }
+    SM.next();
     return v.join(" ");
   }
   
@@ -200,6 +205,7 @@ function MarkovChain(){
       }
       s += " ";
     }
+    SM.next();
     return s
   }
   
