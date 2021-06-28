@@ -95,7 +95,7 @@ console.log(my_state.next())
 let text = MC.compose(300);
 console.log(text);
 
-// repeatedly calls MC.update() 300 times to construct a string
+// repeatedly calls MC.update() 300 times to construct an array of tokens
 ```
 
 ### MarkovChain.makeSentence()
