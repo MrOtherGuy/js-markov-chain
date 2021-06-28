@@ -113,6 +113,7 @@ function StateManager(){
   this.clear = () => {
     states.clear();
     currentState = null;
+    this.needsInitilization = true;
   }
   
   return this
@@ -129,7 +130,7 @@ function MarkovChain(){
   this.init = (val) => SM.initialize(val);
   
   this.build = (arr) => {
-    if(!arr.length){
+    if(!arr?.length){
       return
     }
     SM.clear();
@@ -145,7 +146,33 @@ function MarkovChain(){
     return this
   }
   
-  this.buildFromText = (str) => this.build(str.split(" ").filter(a => !!a.trim() ));
+  this.buildFromText = (str) => {
+    const re = /\S+/g;
+    SM.clear();
+    let match;
+    let previous = null;
+    while(match = re.exec(str)){
+      let content = match[0].toLowerCase();
+      let skipLast = /[\.,?!:;]$/.test(content);
+      let node = SM.add( skipLast ? content.slice(0,-1) : content );
+      previous && previous.set(node.value);
+      if(skipLast){
+        if(content.length < 2){
+          continue
+        }
+        let next = SM.add(content.slice(-1));
+        if(!(next && next.value != undefined)){
+          throw "somehow next didn't have value";
+        }
+        node.set(next.value);
+        previous = next;
+      }else{
+        previous = node;
+      }
+    }
+    SM.compile();
+    return this
+  }
   
   this.compose = (n) => {
     if(SM.needsInitilization){
@@ -156,7 +183,7 @@ function MarkovChain(){
     let v = [SM.current().value];
     if(v[0] === null){
       SM.needsInitilization = true;
-      return "";
+      return [];
     }
     while(++i < n){
       let n = SM.next().value;
@@ -167,7 +194,7 @@ function MarkovChain(){
       v.push(n)
     }
     SM.next();
-    return v.join(" ");
+    return v;
   }
   
   this.makeSentence = (max = 50) => {
@@ -182,7 +209,7 @@ function MarkovChain(){
       SM.needsInitilization = true;
       return ""
     }
-    while(re.test(first)){
+    while(re.test(first) || first === ","){
       first = SM.next().value;
       i++;
       if(i > max || first === null){
@@ -190,6 +217,7 @@ function MarkovChain(){
         return ""
       }
     }
+    
     let s = first.replace(/^./,first[0].toUpperCase()) + " ";
   
     while(i++ < max){
@@ -199,11 +227,11 @@ function MarkovChain(){
         SM.needsInitilization = true;
         break
       }
-      s += val;
       if(re.test(val)){
+        s += val;
         break;
       }
-      s += " ";
+      s += /^[\.,:;]$/.test(val) ? val : " "+val;
     }
     SM.next();
     return s

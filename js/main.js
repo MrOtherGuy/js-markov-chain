@@ -14,7 +14,34 @@ function init(){
   const getTextBox = () => document.getElementById("textbox");
   
   document.getElementById("textButton").addEventListener("click",(e)=>{
-    getTextBox().textContent = MC.compose(200);
+    let tokens = MC.compose(200);
+    if(tokens.length === 0){
+      getTextBox().textContent = "";
+      reInitMC();
+      return
+    }
+    let str = tokens[0].replace(/^./,tokens[0][0].toUpperCase());
+    let startSentence = false;
+    for(let i = 1; i < tokens.length; i++){
+      let token = tokens[i];
+      if(!/^[\.?!,;:]$/.test(token)){
+        str += " ";
+      }else{
+        if(/^[\.?!]$/.test(token)){
+          startSentence = true;
+        }
+        str += token;
+        continue
+      }
+      if(startSentence){
+        str += token.replace(/^./,token[0].toUpperCase());
+        startSentence = false;
+      }else{
+        str += token;
+      }
+    }
+    
+    getTextBox().textContent = str;
     reInitMC()
   });
   document.getElementById("sentenceButton").addEventListener("click",(e)=>{

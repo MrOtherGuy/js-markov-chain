@@ -34,7 +34,7 @@ let str = "some very and quite a long but still very... ...very long string";
 MC.buildFromText(str)
 ```
 
-This method is basically a wrapper for .build(). It splits the string into an array of `<space>` separated parts, removes any empty elements, and then calls build()
+This method iterates through an input string and splits to tokens at `.`,`,`,`?`,`!`,`<whitespace>`,`:`and`;`. Each of those gets a token and the "words" each get a token. `.buildFromText()` also makes words lower case so the chain will treat upper and lower case words as equal.
 
 Both of the above just modify the internal state of the MarkovChain instance.
 
