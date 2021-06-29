@@ -1,58 +1,67 @@
 'use strict';
 
-function State(val){
-  let targets = [];
-  let hits = [];
-  let probabilities = null;
-  let modified = true;
-  this.value = val;
-  
-  this.set = (val) => {
-    if(probabilities){
-      modified = true;
+class State{
+  constructor(val){
+    this.targets = [];
+    this.hits = [];
+    this.probabilities = null;
+    this.modified = true;
+    this.value = val;
+    return Object.seal(this)
+  }
+  set(val){
+    if(this.hits === null){
+      return
     }
-    let idx = targets.indexOf(val);
+    this.modified = true;
+    let idx = this.targets.indexOf(val);
     if(idx === -1){
-      targets.push(val);
-      hits.push(1);
+      this.targets.push(val);
+      this.hits.push(1);
     }else{
-      hits[idx]++
+      this.hits[idx]++
     }
   }
-  
-  this.next = () => {
-    if(modified){
-      return 0
-    }else{
-      if(!targets.length){
-        // this means that the state is a dead-end. There is nothing to transition into
-        return null
+  next(){
+    const probabilities = (() => {
+      if(this.modified){
+        let c = 0;
+        return this.hits.map( a => { c += a/sum; return c } )
       }
-      let rand = Math.random();
-      let idx = 0;
-      while(idx < probabilities.length){
-        if(rand < probabilities[idx]){
-          return targets[idx]
-        }
-        idx++
-      }
-      return targets[idx-1]
+      return this.probabilities;
+    })();
+    if(!this.targets.length){
+      // this means that the state is a dead-end. There is nothing to transition into
+      return null
     }
+    let rand = Math.random();
+    let idx = 0;
+    while(idx < probabilities.length){
+      if(rand < probabilities[idx]){
+        return this.targets[idx]
+      }
+      idx++
+    }
+    return this.targets[idx-1]
   }
-  
-  this.compile = () => {
+  compile(isFinal){
+    if(this.hits === null){
+      throw "Can't compile already finalized state";
+    }
     let sum = 0;
-    for(let i of hits){
+    for(let i of this.hits){
       sum += i;
     }
     let c = 0;
-    probabilities = hits.map( a => { c += a/sum; return c } );
-    
-    modified = false;
-    return 
+    this.probabilities = this.hits.map( a => { c += a/sum; return c } );
+    this.modified = false;
+    if(isFinal){
+      this.hits = null;
+      Object.freeze(this);
+      return 
+    }
+    return
   }
-  
-  return this
 }
 
 function StateManager(){
@@ -71,9 +80,9 @@ function StateManager(){
     return n
   }
    
-  this.compile = () => {
+  this.compile = (isFinal) => {
     for(let state of states.values()){
-      state.compile()
+      state.compile(!!isFinal)
     }
     return
   }
@@ -129,7 +138,7 @@ function MarkovChain(){
   this.needsInit = () => SM.needsInitilization;
   this.init = (val) => SM.initialize(val);
   
-  this.build = (arr) => {
+  this.build = (arr,isFinal = false) => {
     if(!arr?.length){
       return
     }
@@ -142,11 +151,11 @@ function MarkovChain(){
       }
       node.set(next.value);
     }
-    SM.compile();
+    SM.compile(!!isFinal);
     return this
   }
   
-  this.buildFromText = (str) => {
+  this.buildFromText = (str,isFinal = false) => {
     const re = /\S+/g;
     SM.clear();
     let match;
@@ -170,7 +179,7 @@ function MarkovChain(){
         previous = node;
       }
     }
-    SM.compile();
+    SM.compile(!!isFinal);
     return this
   }
   
@@ -218,7 +227,7 @@ function MarkovChain(){
       }
     }
     
-    let s = first.replace(/^./,first[0].toUpperCase()) + " ";
+    let s = first.replace(/^./,first[0].toUpperCase());
   
     while(i++ < max){
       let val = SM.next().value;
