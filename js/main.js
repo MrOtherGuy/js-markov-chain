@@ -2,8 +2,8 @@
 const MC = new MarkovChain();
 function init(){
   console.log(`${document.title} has been loaded`);
-
-  MC.build(a);
+  let isFinal = true;
+  MC.build(a,isFinal);
   MC.init(); // sets initial state
   
   const reInitMC = () => {
@@ -52,7 +52,7 @@ function init(){
     let input = document.getElementById("textinput");
     let status = input.previousElementSibling;
     try{
-      MC.buildFromText(input.value);
+      MC.buildFromText(input.value,true);
       MC.init();
       status.textContent = "build OK";
       status.classList.add("success");
@@ -63,7 +63,6 @@ function init(){
     setTimeout(()=>{ status.className = "status"},300);
   })
 }
-
 
 
 document.onreadystatechange = function () {
